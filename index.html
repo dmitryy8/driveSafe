@@ -1,0 +1,1783 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DriveSafe AI - Система защиты от засыпания за рулем</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            overflow-x: hidden;
+            width: 100%;
+        }
+
+        :root {
+            --primary-black: #0a0a0a;
+            --secondary-black: #1a1a1a;
+            --dark-gray: #2a2a2a;
+            --medium-gray: #4a4a4a;
+            --light-gray: #b0b0b0;
+            --white: #ffffff;
+            --accent-red: #ff3b3b;
+            --accent-blue: #3b82f6;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--primary-black);
+            color: var(--white);
+            line-height: 1.6;
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+        }
+
+        /* Animated Background */
+        .animated-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0a0a0a 100%);
+        }
+
+        .animated-bg::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: moveGrid 20s linear infinite;
+        }
+
+        @keyframes moveGrid {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1.5rem 5%;
+            z-index: 1000;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        nav.scrolled {
+            padding: 1rem 5%;
+            background: rgba(10, 10, 10, 0.98);
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ffffff 0%, #b0b0b0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            z-index: 1001;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2.5rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--light-gray);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-red));
+            transition: width 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--white);
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        /* Mobile Menu Button */
+        .mobile-menu-btn {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            z-index: 1001;
+            padding: 5px;
+        }
+
+        .mobile-menu-btn span {
+            width: 25px;
+            height: 3px;
+            background: var(--white);
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+
+        .mobile-menu-btn.active span:nth-child(1) {
+            transform: rotate(45deg) translate(8px, 8px);
+        }
+
+        .mobile-menu-btn.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .mobile-menu-btn.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(7px, -7px);
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8rem 5% 4rem;
+            position: relative;
+        }
+
+        .hero-content {
+            max-width: 1400px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        .hero-text h1 {
+            font-size: 4.5rem;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, #ffffff 0%, #b0b0b0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: fadeInUp 1s ease;
+        }
+
+        .hero-text .tagline {
+            font-size: 1.5rem;
+            color: var(--light-gray);
+            margin-bottom: 2rem;
+            animation: fadeInUp 1s ease 0.2s both;
+        }
+
+        .hero-text .slogan {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--accent-red);
+            margin-bottom: 2.5rem;
+            animation: fadeInUp 1s ease 0.4s both;
+        }
+
+        .cta-button {
+            display: inline-block;
+            padding: 1.2rem 3rem;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-red));
+            color: var(--white);
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            animation: fadeInUp 1s ease 0.6s both;
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(59, 130, 246, 0.5);
+        }
+
+        .hero-image {
+            position: relative;
+            animation: fadeInRight 1s ease 0.3s both;
+        }
+
+        .device-mockup {
+            width: 100%;
+            height: 500px;
+            background: linear-gradient(135deg, var(--secondary-black), var(--dark-gray));
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .device-mockup::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(59, 130, 246, 0.1), transparent);
+            animation: shine 3s infinite;
+        }
+
+        @keyframes shine {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .device-icon {
+            font-size: 10rem;
+            color: var(--accent-blue);
+            opacity: 0.3;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInRight {
+            from {
+                opacity: 0;
+                transform: translateX(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* How It Works Section */
+        .how-it-works {
+            padding: 8rem 5%;
+            background: var(--secondary-black);
+            position: relative;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 4rem;
+            background: linear-gradient(135deg, #ffffff 0%, #b0b0b0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .steps-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 3rem;
+        }
+
+        .step {
+            background: linear-gradient(135deg, var(--dark-gray), var(--secondary-black));
+            padding: 3rem 2rem;
+            border-radius: 20px;
+            text-align: center;
+            transition: all 0.4s ease;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .step::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.1), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .step:hover::before {
+            left: 100%;
+        }
+
+        .step:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 50px rgba(59, 130, 246, 0.2);
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+
+        .step-icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-red));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .step-number {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            font-size: 3rem;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.05);
+        }
+
+        .step h3 {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            color: var(--white);
+        }
+
+        .step p {
+            color: var(--light-gray);
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+
+        /* Technical Specs Section */
+        .tech-specs {
+            padding: 8rem 5%;
+            background: var(--primary-black);
+        }
+
+        .specs-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .spec-card {
+            background: linear-gradient(135deg, var(--secondary-black), var(--dark-gray));
+            padding: 2.5rem;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .spec-card:hover {
+            border-color: rgba(59, 130, 246, 0.5);
+            transform: translateX(10px);
+        }
+
+        .spec-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--accent-blue);
+        }
+
+        .spec-card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+            color: var(--white);
+        }
+
+        .spec-card p {
+            color: var(--light-gray);
+            font-size: 1.05rem;
+        }
+
+        /* 3D Models Section */
+        .models-3d {
+            padding: 8rem 5%;
+            background: var(--secondary-black);
+        }
+
+        .models-grid {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 3rem;
+        }
+
+        .model-card {
+            background: var(--dark-gray);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.4s ease;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .model-card:hover {
+            border-color: rgba(59, 130, 246, 0.5);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .model-viewer {
+            width: 100%;
+            height: 300px;
+            background: linear-gradient(135deg, var(--secondary-black), var(--primary-black));
+            border-radius: 15px;
+            margin-bottom: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            cursor: grab;
+        }
+
+        .model-viewer:active {
+            cursor: grabbing;
+        }
+
+        .model-card h3 {
+            font-size: 1.4rem;
+            margin-bottom: 0.8rem;
+            color: var(--white);
+        }
+
+        .model-card p {
+            color: var(--light-gray);
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
+        /* Gallery Section */
+        .gallery {
+            padding: 8rem 5%;
+            background: var(--primary-black);
+        }
+
+        .gallery-grid {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+        }
+
+        .gallery-item {
+            position: relative;
+            height: 400px;
+            border-radius: 20px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.4s ease;
+        }
+
+        .gallery-item:hover {
+            transform: scale(1.02);
+            box-shadow: 0 20px 60px rgba(59, 130, 246, 0.3);
+        }
+
+        .gallery-placeholder {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--dark-gray), var(--secondary-black));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .gallery-placeholder i {
+            font-size: 4rem;
+            color: var(--accent-blue);
+        }
+
+        .gallery-placeholder p {
+            color: var(--light-gray);
+            font-size: 1.2rem;
+        }
+
+        /* FAQ Section */
+        .faq {
+            padding: 8rem 5%;
+            background: var(--secondary-black);
+        }
+
+        .faq-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .faq-item {
+            background: var(--dark-gray);
+            margin-bottom: 1.5rem;
+            border-radius: 15px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .faq-item:hover {
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+
+        .faq-question {
+            padding: 2rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--white);
+            transition: all 0.3s ease;
+        }
+
+        .faq-question:hover {
+            color: var(--accent-blue);
+        }
+
+        .faq-question i {
+            transition: transform 0.3s ease;
+        }
+
+        .faq-item.active .faq-question i {
+            transform: rotate(180deg);
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.4s ease;
+            padding: 0 2rem;
+        }
+
+        .faq-item.active .faq-answer {
+            max-height: 500px;
+            padding: 0 2rem 2rem;
+        }
+
+        .faq-answer p {
+            color: var(--light-gray);
+            font-size: 1.1rem;
+            line-height: 1.8;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--primary-black);
+            padding: 4rem 5% 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .footer-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 4rem;
+            margin-bottom: 3rem;
+        }
+
+        .footer-brand h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #ffffff 0%, #b0b0b0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .footer-brand p {
+            color: var(--light-gray);
+            line-height: 1.8;
+            font-size: 1.05rem;
+        }
+
+        .footer-section h3 {
+            font-size: 1.3rem;
+            margin-bottom: 1.5rem;
+            color: var(--white);
+        }
+
+        .footer-links {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 0.8rem;
+        }
+
+        .footer-links a {
+            color: var(--light-gray);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: var(--accent-blue);
+            padding-left: 5px;
+        }
+
+        .contact-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            color: var(--light-gray);
+        }
+
+        .contact-info i {
+            color: var(--accent-blue);
+            font-size: 1.2rem;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .social-links a {
+            width: 40px;
+            height: 40px;
+            background: var(--dark-gray);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            transition: all 0.3s ease;
+        }
+
+        .social-links a:hover {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-red));
+            transform: translateY(-3px);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            color: var(--light-gray);
+        }
+
+        /* Scroll animations */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .hero-content {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .hero-text h1 {
+                font-size: 3.5rem;
+            }
+
+            .steps-container,
+            .models-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 2rem;
+            }
+
+            .footer-content {
+                grid-template-columns: 1fr;
+            }
+
+            .specs-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            /* Mobile Navigation */
+            .mobile-menu-btn {
+                display: flex;
+            }
+
+            .nav-links {
+                position: fixed;
+                top: 0;
+                right: -100%;
+                width: 70%;
+                height: 100vh;
+                background: rgba(26, 26, 26, 0.98);
+                backdrop-filter: blur(10px);
+                flex-direction: column;
+                padding: 6rem 2rem 2rem;
+                gap: 2rem;
+                transition: right 0.4s ease;
+                box-shadow: -5px 0 20px rgba(0, 0, 0, 0.5);
+            }
+
+            .nav-links.active {
+                right: 0;
+            }
+
+            .nav-links a {
+                font-size: 1.3rem;
+                padding: 1rem 0;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            }
+
+            .nav-links a::after {
+                display: none;
+            }
+
+            .logo {
+                font-size: 1.5rem;
+            }
+
+            nav {
+                padding: 1rem 5%;
+            }
+
+            /* Hero Section Mobile */
+            .hero {
+                padding: 6rem 5% 3rem;
+                min-height: auto;
+            }
+
+            .hero-content {
+                gap: 2rem;
+            }
+
+            .hero-text h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero-text .tagline {
+                font-size: 1.2rem;
+            }
+
+            .hero-text .slogan {
+                font-size: 1.4rem;
+            }
+
+            .cta-button {
+                padding: 1rem 2rem;
+                font-size: 1rem;
+            }
+
+            .device-mockup {
+                height: 300px;
+            }
+
+            .device-icon {
+                font-size: 6rem;
+            }
+
+            /* Sections Mobile */
+            .section-title {
+                font-size: 2rem;
+                margin-bottom: 2rem;
+            }
+
+            .how-it-works,
+            .tech-specs,
+            .models-3d,
+            .gallery,
+            .faq {
+                padding: 4rem 5%;
+            }
+
+            .steps-container,
+            .models-grid,
+            .specs-container {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            .step {
+                padding: 2rem 1.5rem;
+            }
+
+            .step-icon {
+                font-size: 3rem;
+            }
+
+            .step-number {
+                font-size: 2rem;
+                top: 1rem;
+                right: 1rem;
+            }
+
+            .step h3 {
+                font-size: 1.5rem;
+            }
+
+            .step p {
+                font-size: 1rem;
+            }
+
+            /* Spec Cards Mobile */
+            .spec-card {
+                padding: 2rem;
+            }
+
+            .spec-icon {
+                font-size: 2rem;
+            }
+
+            .spec-card h3 {
+                font-size: 1.2rem;
+            }
+
+            .spec-card p {
+                font-size: 1rem;
+            }
+
+            /* 3D Models Mobile */
+            .models-3d {
+                padding: 4rem 1%;
+                overflow-x: hidden;
+            }
+
+            .models-3d p {
+                font-size: 0.9rem;
+                margin-bottom: 1.5rem;
+                padding: 0;
+            }
+
+            .models-grid {
+                gap: 0.6rem;
+                padding: 0 0.5rem;
+                max-width: 100%;
+                overflow: hidden;
+            }
+
+            .model-card {
+                padding: 0.6rem;
+                border-radius: 10px;
+                max-width: 100%;
+                margin: 0 auto;
+            }
+
+            .model-viewer {
+                height: 160px;
+                margin-bottom: 0.6rem;
+                border-radius: 6px;
+            }
+
+            .model-card h3 {
+                font-size: 0.95rem;
+                margin-bottom: 0.3rem;
+            }
+
+            .model-card p {
+                font-size: 0.8rem;
+                line-height: 1.35;
+            }
+
+            /* Gallery Mobile */
+            .gallery-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            .gallery-item {
+                height: 300px;
+            }
+
+            .gallery-placeholder i {
+                font-size: 3rem;
+            }
+
+            .gallery-placeholder p {
+                font-size: 1rem;
+            }
+
+            /* FAQ Mobile */
+            .faq-question {
+                padding: 1.5rem;
+                font-size: 1.1rem;
+            }
+
+            .faq-answer p {
+                font-size: 1rem;
+            }
+
+            /* Footer Mobile */
+            footer {
+                padding: 3rem 5% 2rem;
+            }
+
+            .footer-content {
+                gap: 2rem;
+                margin-bottom: 2rem;
+            }
+
+            .footer-brand h2 {
+                font-size: 1.5rem;
+            }
+
+            .footer-brand p {
+                font-size: 1rem;
+            }
+
+            .footer-section h3 {
+                font-size: 1.2rem;
+            }
+
+            .contact-info {
+                font-size: 0.95rem;
+            }
+
+            .footer-bottom {
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                overflow-x: hidden;
+            }
+
+            .hero-text h1 {
+                font-size: 2rem;
+            }
+
+            .hero-text .tagline {
+                font-size: 1rem;
+            }
+
+            .hero-text .slogan {
+                font-size: 1.2rem;
+            }
+
+            .section-title {
+                font-size: 1.8rem;
+            }
+
+            .nav-links {
+                width: 80%;
+            }
+
+            .cta-button {
+                padding: 0.9rem 1.5rem;
+                font-size: 0.95rem;
+            }
+
+            .device-mockup {
+                height: 250px;
+            }
+
+            .models-3d {
+                padding: 3rem 0.5%;
+                overflow-x: hidden;
+            }
+
+            .models-grid {
+                gap: 0.4rem;
+                padding: 0;
+                max-width: calc(100vw - 2%);
+                margin: 0 auto;
+            }
+
+            .model-card {
+                padding: 0.5rem;
+                border-radius: 8px;
+                margin: 0;
+                width: 100%;
+            }
+
+            .model-viewer {
+                height: 130px;
+                margin-bottom: 0.5rem;
+                border-radius: 5px;
+            }
+
+            .step h3,
+            .spec-card h3 {
+                font-size: 1rem;
+            }
+
+            .model-card h3 {
+                font-size: 0.85rem;
+                margin-bottom: 0.25rem;
+            }
+
+            .model-card p {
+                font-size: 0.7rem;
+                line-height: 1.3;
+            }
+
+            .how-it-works,
+            .tech-specs,
+            .gallery,
+            .faq {
+                padding: 3rem 2%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="animated-bg"></div>
+
+    <!-- Navigation -->
+    <nav id="navbar">
+        <div class="nav-container">
+            <div class="logo">DriveSafe AI</div>
+            <button class="mobile-menu-btn" id="mobileMenuBtn">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="#home">Главная</a></li>
+                <li><a href="#how-it-works">Как работает</a></li>
+                <li><a href="#specs">Характеристики</a></li>
+                <li><a href="#components">Компоненты</a></li>
+                <li><a href="#gallery">Галерея</a></li>
+                <li><a href="#faq">FAQ</a></li>
+                <li><a href="#contact">Контакты</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero" id="home">
+        <div class="hero-content">
+            <div class="hero-text">
+                <h1>DriveSafe AI</h1>
+                <p class="tagline">Интеллектуальная система мониторинга состояния водителя</p>
+                <p class="slogan">Не дай сну взять управление — доверься технологиям!</p>
+                <a href="#how-it-works" class="cta-button">Узнать больше</a>
+            </div>
+            <div class="hero-image">
+                <div class="device-mockup">
+                    <i class="fas fa-eye device-icon"></i>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section class="how-it-works fade-in" id="how-it-works">
+        <h2 class="section-title">Как это работает</h2>
+        <div class="steps-container">
+            <div class="step">
+                <div class="step-number">01</div>
+                <div class="step-icon">
+                    <i class="fas fa-video"></i>
+                </div>
+                <h3>Камера наблюдает</h3>
+                <p>Высокоточная Raspberry Pi Camera непрерывно отслеживает лицо водителя в режиме реального времени, работая в любых условиях освещения.</p>
+            </div>
+            <div class="step">
+                <div class="step-number">02</div>
+                <div class="step-icon">
+                    <i class="fas fa-brain"></i>
+                </div>
+                <h3>AI-анализ состояния</h3>
+                <p>Алгоритм компьютерного зрения отслеживает закрытие глаз. Если глаза закрыты более 3 секунд — система фиксирует опасное состояние.</p>
+            </div>
+            <div class="step">
+                <div class="step-number">03</div>
+                <div class="step-icon">
+                    <i class="fas fa-bell"></i>
+                </div>
+                <h3>Мгновенная тревога</h3>
+                <p>Срабатывает громкая звуковая сигнализация (пьезо-буззер) и яркая световая индикация — водитель немедленно просыпается и возвращает контроль.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Technical Specs Section -->
+    <section class="tech-specs fade-in" id="specs">
+        <h2 class="section-title">Технические характеристики</h2>
+        <div class="specs-container">
+            <div class="spec-card">
+                <div class="spec-icon"><i class="fas fa-microchip"></i></div>
+                <h3>Процессор</h3>
+                <p>Raspberry Pi Zero 2 W — компактный 64-битный четырехъядерный процессор с Wi-Fi и Bluetooth</p>
+            </div>
+            <div class="spec-card">
+                <div class="spec-icon"><i class="fas fa-camera"></i></div>
+                <h3>Камера</h3>
+                <p>Raspberry Pi Camera Module (CSI) — 8MP, 1080p видео с широким углом обзора</p>
+            </div>
+            <div class="spec-card">
+                <div class="spec-icon"><i class="fas fa-clock"></i></div>
+                <h3>Время реакции</h3>
+                <p>3 секунды — критический порог обнаружения закрытых глаз перед тревогой</p>
+            </div>
+            <div class="spec-card">
+                <div class="spec-icon"><i class="fas fa-bolt"></i></div>
+                <h3>Питание</h3>
+                <p>5V/2-3A через Power Bank — автономная работа до 8-10 часов непрерывно</p>
+            </div>
+            <div class="spec-card">
+                <div class="spec-icon"><i class="fas fa-volume-up"></i></div>
+                <h3>Звук</h3>
+                <p>Активный пьезо-буззер 5V — громкость до 85дБ, достаточная для пробуждения</p>
+            </div>
+            <div class="spec-card">
+                <div class="spec-icon"><i class="fas fa-lightbulb"></i></div>
+                <h3>Индикация</h3>
+                <p>Яркий LED или строб-мигатель — визуальное предупреждение для максимальной эффективности</p>
+            </div>
+            <div class="spec-card">
+                <div class="spec-icon"><i class="fas fa-sd-card"></i></div>
+                <h3>Память</h3>
+                <p>microSD карта 16-32GB — хранение ОС, алгоритмов и логов работы системы</p>
+            </div>
+            <div class="spec-card">
+                <div class="spec-icon"><i class="fas fa-cog"></i></div>
+                <h3>Компоненты</h3>
+                <p>Транзисторы NPN/MOSFET, резисторы, провода DuPont — профессиональная электроника</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3D Models Section -->
+    <section class="models-3d fade-in" id="components">
+        <h2 class="section-title">3D Модели компонентов</h2>
+        <p style="text-align: center; color: var(--light-gray); font-size: 1.2rem; margin-bottom: 4rem;">
+            Интерактивные 3D модели — вращайте мышкой для детального просмотра
+        </p>
+        <div class="models-grid">
+            <div class="model-card">
+                <div class="model-viewer" id="model1"></div>
+                <h3>Raspberry Pi Zero 2 W</h3>
+                <p>Мощный микрокомпьютер размером с кредитную карту. Обеспечивает обработку видео в реальном времени и выполнение AI-алгоритмов.</p>
+            </div>
+            <div class="model-card">
+                <div class="model-viewer" id="model2"></div>
+                <h3>Raspberry Pi Camera</h3>
+                <p>Высококачественная камера с CSI интерфейсом. Захватывает четкое изображение лица водителя для точного анализа.</p>
+            </div>
+            <div class="model-card">
+                <div class="model-viewer" id="model3"></div>
+                <h3>microSD Card 32GB</h3>
+                <p>Надежный накопитель для операционной системы, программного обеспечения и хранения данных мониторинга.</p>
+            </div>
+            <div class="model-card">
+                <div class="model-viewer" id="model4"></div>
+                <h3>Power Bank 5V/3A</h3>
+                <p>Портативный источник питания обеспечивает автономную работу устройства в течение всей поездки.</p>
+            </div>
+            <div class="model-card">
+                <div class="model-viewer" id="model5"></div>
+                <h3>Пьезо-буззер 5V</h3>
+                <p>Мощный звуковой излучатель создает громкий сигнал тревоги для немедленного пробуждения водителя.</p>
+            </div>
+            <div class="model-card">
+                <div class="model-viewer" id="model6"></div>
+                <h3>LED Строб-мигатель</h3>
+                <p>Яркая световая индикация привлекает внимание водителя визуально, дополняя звуковое предупреждение.</p>
+            </div>
+            <div class="model-card">
+                <div class="model-viewer" id="model7"></div>
+                <h3>NPN Транзистор 2N2222</h3>
+                <p>Управляет высокой мощностью буззера и LED через низковольтные сигналы Raspberry Pi.</p>
+            </div>
+            <div class="model-card">
+                <div class="model-viewer" id="model8"></div>
+                <h3>Резисторы 220Ω / 1kΩ</h3>
+                <p>Ограничивают ток для защиты светодиодов и транзисторов, обеспечивая стабильную работу схемы.</p>
+            </div>
+            <div class="model-card">
+                <div class="model-viewer" id="model9"></div>
+                <h3>Провода DuPont</h3>
+                <p>Качественные соединительные провода для надежной коммутации всех компонентов системы.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Gallery Section -->
+    <section class="gallery fade-in" id="gallery">
+        <h2 class="section-title">Галерея проекта</h2>
+        <div class="gallery-grid">
+            <div class="gallery-item">
+                <div class="gallery-placeholder">
+                    <i class="fas fa-project-diagram"></i>
+                    <p>Схема Fritzing</p>
+                </div>
+            </div>
+            <div class="gallery-item">
+                <div class="gallery-placeholder">
+                    <i class="fas fa-cube"></i>
+                    <p>3D Модель Tinkercad</p>
+                </div>
+            </div>
+            <div class="gallery-item">
+                <div class="gallery-placeholder">
+                    <i class="fas fa-car"></i>
+                    <p>Устройство в автомобиле</p>
+                </div>
+            </div>
+            <div class="gallery-item">
+                <div class="gallery-placeholder">
+                    <i class="fas fa-code"></i>
+                    <p>Интерфейс программы</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="faq fade-in" id="faq">
+        <h2 class="section-title">Часто задаваемые вопросы</h2>
+        <div class="faq-container">
+            <div class="faq-item">
+                <div class="faq-question">
+                    Насколько безопасно устройство для использования в автомобиле?
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>Устройство полностью безопасно. Оно работает от низкого напряжения (5V), не вмешивается в электронику автомобиля и крепится на приборной панели без сверления. Все компоненты соответствуют стандартам безопасности электроники.</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">
+                    Как долго работает устройство от Power Bank?
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>При использовании Power Bank емкостью 10000mAh устройство может работать непрерывно 8-10 часов. Raspberry Pi Zero 2 W очень энергоэффективен, потребляя около 400-600mA в рабочем режиме.</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">
+                    Работает ли система в темное время суток?
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>Да! Система оснащена алгоритмами компенсации освещения и может работать при минимальном свете от приборной панели. Для полной темноты можно добавить инфракрасную подсветку.</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">
+                    Можно ли настроить чувствительность системы?
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>Абсолютно! В программном обеспечении можно настроить время срабатывания (по умолчанию 3 секунды), громкость сигнала и интенсивность световой индикации под ваши предпочтения.</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">
+                    Что делать, если я ношу очки или солнцезащитные очки?
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>Алгоритм распознавания лиц обучен работать с очками. Обычные очки не создают проблем. Для темных солнцезащитных очков рекомендуется калибровка системы или использование в дневное время без них.</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">
+                    Требуется ли подключение к интернету?
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>Нет, устройство работает полностью автономно. Все алгоритмы обработки выполняются локально на Raspberry Pi. Wi-Fi используется только для первоначальной настройки и обновлений ПО.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="contact">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <h2>DriveSafe AI</h2>
+                <p>Инновационная система безопасности, разработанная для сохранения жизней на дорогах. Наша миссия — сделать каждую поездку безопасной, используя передовые технологии искусственного интеллекта и компьютерного зрения.</p>
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="#"><i class="fab fa-github"></i></a>
+                </div>
+            </div>
+            <div class="footer-section">
+                <h3>Навигация</h3>
+                <ul class="footer-links">
+                    <li><a href="#home">Главная</a></li>
+                    <li><a href="#how-it-works">Как работает</a></li>
+                    <li><a href="#specs">Характеристики</a></li>
+                    <li><a href="#components">Компоненты</a></li>
+                    <li><a href="#gallery">Галерея</a></li>
+                    <li><a href="#faq">FAQ</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>Контакты</h3>
+                <div class="contact-info">
+                    <i class="fas fa-envelope"></i>
+                    <span>info@drivesafe-ai.com</span>
+                </div>
+                <div class="contact-info">
+                    <i class="fas fa-phone"></i>
+                    <span>+7 (999) 123-45-67</span>
+                </div>
+                <div class="contact-info">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>Москва, Россия</span>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 DriveSafe AI. Все права защищены. Создано с ❤️ для безопасности водителей.</p>
+        </div>
+    </footer>
+
+    <!-- Three.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <script>
+        // Mobile Menu Toggle
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const navLinks = document.getElementById('navLinks');
+
+        if (mobileMenuBtn) {
+            mobileMenuBtn.addEventListener('click', () => {
+                mobileMenuBtn.classList.toggle('active');
+                navLinks.classList.toggle('active');
+            });
+
+            // Close menu when clicking on a link
+            navLinks.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', () => {
+                    mobileMenuBtn.classList.remove('active');
+                    navLinks.classList.remove('active');
+                });
+            });
+
+            // Close menu when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!navLinks.contains(e.target) && !mobileMenuBtn.contains(e.target)) {
+                    mobileMenuBtn.classList.remove('active');
+                    navLinks.classList.remove('active');
+                }
+            });
+        }
+
+        // Navigation scroll effect
+        window.addEventListener('scroll', () => {
+            const nav = document.getElementById('navbar');
+            if (window.scrollY > 100) {
+                nav.classList.add('scrolled');
+            } else {
+                nav.classList.remove('scrolled');
+            }
+        });
+
+        // Smooth scrolling
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Scroll animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -100px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+        // FAQ Accordion
+        document.querySelectorAll('.faq-question').forEach(question => {
+            question.addEventListener('click', () => {
+                const item = question.parentElement;
+                const wasActive = item.classList.contains('active');
+                
+                document.querySelectorAll('.faq-item').forEach(faqItem => {
+                    faqItem.classList.remove('active');
+                });
+                
+                if (!wasActive) {
+                    item.classList.add('active');
+                }
+            });
+        });
+
+        // 3D Models using Three.js
+        function create3DModel(containerId, modelType) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setClearColor(0x000000, 0);
+            container.appendChild(renderer.domElement);
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(5, 5, 5);
+            scene.add(directionalLight);
+
+            const pointLight = new THREE.PointLight(0x3b82f6, 1);
+            pointLight.position.set(-5, 5, 5);
+            scene.add(pointLight);
+
+            let mesh;
+
+            // Create different geometries based on component type
+            switch(modelType) {
+                case 'raspberry':
+                    // Raspberry Pi board
+                    const boardGeometry = new THREE.BoxGeometry(2, 0.1, 1.3);
+                    const boardMaterial = new THREE.MeshPhongMaterial({ 
+                        color: 0x2d5016,
+                        shininess: 30
+                    });
+                    mesh = new THREE.Mesh(boardGeometry, boardMaterial);
+                    
+                    // Add components on board
+                    const chipGeometry = new THREE.BoxGeometry(0.4, 0.15, 0.4);
+                    const chipMaterial = new THREE.MeshPhongMaterial({ color: 0x1a1a1a });
+                    const chip = new THREE.Mesh(chipGeometry, chipMaterial);
+                    chip.position.set(0, 0.13, 0);
+                    mesh.add(chip);
+                    
+                    // GPIO pins
+                    const pinsGeometry = new THREE.BoxGeometry(1.6, 0.2, 0.1);
+                    const pinsMaterial = new THREE.MeshPhongMaterial({ color: 0xffd700 });
+                    const pins = new THREE.Mesh(pinsGeometry, pinsMaterial);
+                    pins.position.set(0, 0.15, -0.5);
+                    mesh.add(pins);
+                    break;
+
+                case 'camera':
+                    // Camera module
+                    const cameraBodyGeometry = new THREE.BoxGeometry(1, 0.8, 0.3);
+                    const cameraBodyMaterial = new THREE.MeshPhongMaterial({ color: 0x2d5016 });
+                    mesh = new THREE.Mesh(cameraBodyGeometry, cameraBodyMaterial);
+                    
+                    // Lens
+                    const lensGeometry = new THREE.CylinderGeometry(0.25, 0.25, 0.2, 32);
+                    const lensMaterial = new THREE.MeshPhongMaterial({ 
+                        color: 0x1a1a1a,
+                        shininess: 100
+                    });
+                    const lens = new THREE.Mesh(lensGeometry, lensMaterial);
+                    lens.rotation.x = Math.PI / 2;
+                    lens.position.z = 0.25;
+                    mesh.add(lens);
+                    break;
+
+                case 'sdcard':
+                    // SD Card
+                    const sdGeometry = new THREE.BoxGeometry(0.8, 0.05, 1.1);
+                    const sdMaterial = new THREE.MeshPhongMaterial({ color: 0x1a1a1a });
+                    mesh = new THREE.Mesh(sdGeometry, sdMaterial);
+                    
+                    // Gold contacts
+                    const contactsGeometry = new THREE.BoxGeometry(0.6, 0.06, 0.2);
+                    const contactsMaterial = new THREE.MeshPhongMaterial({ color: 0xffd700 });
+                    const contacts = new THREE.Mesh(contactsGeometry, contactsMaterial);
+                    contacts.position.set(0, 0, -0.4);
+                    mesh.add(contacts);
+                    break;
+
+                case 'powerbank':
+                    // Power bank
+                    const pbGeometry = new THREE.BoxGeometry(2, 0.5, 1);
+                    const pbMaterial = new THREE.MeshPhongMaterial({ 
+                        color: 0xffffff,
+                        shininess: 50
+                    });
+                    mesh = new THREE.Mesh(pbGeometry, pbMaterial);
+                    
+                    // USB port
+                    const usbGeometry = new THREE.BoxGeometry(0.3, 0.2, 0.15);
+                    const usbMaterial = new THREE.MeshPhongMaterial({ color: 0x1a1a1a });
+                    const usb = new THREE.Mesh(usbGeometry, usbMaterial);
+                    usb.position.set(0.85, 0, 0);
+                    mesh.add(usb);
+                    break;
+
+                case 'buzzer':
+                    // Buzzer
+                    const buzzerGeometry = new THREE.CylinderGeometry(0.5, 0.5, 0.3, 32);
+                    const buzzerMaterial = new THREE.MeshPhongMaterial({ color: 0x1a1a1a });
+                    mesh = new THREE.Mesh(buzzerGeometry, buzzerMaterial);
+                    
+                    // Buzzer top
+                    const topGeometry = new THREE.CylinderGeometry(0.3, 0.3, 0.05, 32);
+                    const topMaterial = new THREE.MeshPhongMaterial({ color: 0xffd700 });
+                    const top = new THREE.Mesh(topGeometry, topMaterial);
+                    top.position.y = 0.175;
+                    mesh.add(top);
+                    
+                    // Pins
+                    const pinGeometry = new THREE.CylinderGeometry(0.02, 0.02, 0.4, 16);
+                    const pinMaterial = new THREE.MeshPhongMaterial({ color: 0xc0c0c0 });
+                    const pin1 = new THREE.Mesh(pinGeometry, pinMaterial);
+                    pin1.position.set(0.2, -0.35, 0);
+                    mesh.add(pin1);
+                    const pin2 = pin1.clone();
+                    pin2.position.set(-0.2, -0.35, 0);
+                    mesh.add(pin2);
+                    break;
+
+                case 'led':
+                    // LED
+                    const ledBodyGeometry = new THREE.CylinderGeometry(0.25, 0.25, 0.4, 32);
+                    const ledBodyMaterial = new THREE.MeshPhongMaterial({ 
+                        color: 0xff3b3b,
+                        transparent: true,
+                        opacity: 0.8,
+                        shininess: 100
+                    });
+                    mesh = new THREE.Mesh(ledBodyGeometry, ledBodyMaterial);
+                    
+                    // LED dome
+                    const domeGeometry = new THREE.SphereGeometry(0.25, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2);
+                    const domeMaterial = new THREE.MeshPhongMaterial({ 
+                        color: 0xff3b3b,
+                        transparent: true,
+                        opacity: 0.6,
+                        shininess: 100
+                    });
+                    const dome = new THREE.Mesh(domeGeometry, domeMaterial);
+                    dome.position.y = 0.2;
+                    mesh.add(dome);
+                    
+                    // LED pins
+                    const ledPinGeometry = new THREE.CylinderGeometry(0.02, 0.02, 0.5, 16);
+                    const ledPinMaterial = new THREE.MeshPhongMaterial({ color: 0xc0c0c0 });
+                    const ledPin1 = new THREE.Mesh(ledPinGeometry, ledPinMaterial);
+                    ledPin1.position.set(0.1, -0.45, 0);
+                    mesh.add(ledPin1);
+                    const ledPin2 = ledPin1.clone();
+                    ledPin2.position.set(-0.1, -0.45, 0);
+                    mesh.add(ledPin2);
+                    break;
+
+                case 'transistor':
+                    // Transistor TO-92 package
+                    const transBodyGeometry = new THREE.CylinderGeometry(0.15, 0.15, 0.4, 16);
+                    const transBodyMaterial = new THREE.MeshPhongMaterial({ color: 0x1a1a1a });
+                    mesh = new THREE.Mesh(transBodyGeometry, transBodyMaterial);
+                    
+                    // Flat side
+                    const flatGeometry = new THREE.BoxGeometry(0.3, 0.4, 0.05);
+                    const flat = new THREE.Mesh(flatGeometry, transBodyMaterial);
+                    flat.position.z = 0.075;
+                    mesh.add(flat);
+                    
+                    // Three pins
+                    const transPinGeometry = new THREE.CylinderGeometry(0.015, 0.015, 0.6, 16);
+                    const transPinMaterial = new THREE.MeshPhongMaterial({ color: 0xc0c0c0 });
+                    [-0.1, 0, 0.1].forEach(offset => {
+                        const pin = new THREE.Mesh(transPinGeometry, transPinMaterial);
+                        pin.position.set(offset, -0.5, 0);
+                        mesh.add(pin);
+                    });
+                    break;
+
+                case 'resistor':
+                    // Resistor
+                    const resistorBodyGeometry = new THREE.CylinderGeometry(0.08, 0.08, 0.6, 16);
+                    const resistorBodyMaterial = new THREE.MeshPhongMaterial({ color: 0xd4a574 });
+                    mesh = new THREE.Mesh(resistorBodyGeometry, resistorBodyMaterial);
+                    mesh.rotation.z = Math.PI / 2;
+                    
+                    // Color bands
+                    const bandGeometry = new THREE.CylinderGeometry(0.09, 0.09, 0.05, 16);
+                    const colors = [0xff0000, 0xff0000, 0x8b4513]; // Red, Red, Brown for 220Ω
+                    colors.forEach((color, i) => {
+                        const bandMaterial = new THREE.MeshPhongMaterial({ color: color });
+                        const band = new THREE.Mesh(bandGeometry, bandMaterial);
+                        band.rotation.z = Math.PI / 2;
+                        band.position.x = -0.15 + (i * 0.1);
+                        mesh.add(band);
+                    });
+                    
+                    // Wire leads
+                    const leadGeometry = new THREE.CylinderGeometry(0.02, 0.02, 0.4, 16);
+                    const leadMaterial = new THREE.MeshPhongMaterial({ color: 0xc0c0c0 });
+                    const lead1 = new THREE.Mesh(leadGeometry, leadMaterial);
+                    lead1.rotation.z = Math.PI / 2;
+                    lead1.position.x = -0.5;
+                    mesh.add(lead1);
+                    const lead2 = lead1.clone();
+                    lead2.position.x = 0.5;
+                    mesh.add(lead2);
+                    break;
+
+                case 'wires':
+                    // Dupont wires
+                    mesh = new THREE.Group();
+                    const wireColors = [0xff0000, 0x000000, 0xffff00, 0x00ff00, 0x0000ff];
+                    wireColors.forEach((color, i) => {
+                        const wireGeometry = new THREE.CylinderGeometry(0.03, 0.03, 2, 16);
+                        const wireMaterial = new THREE.MeshPhongMaterial({ color: color });
+                        const wire = new THREE.Mesh(wireGeometry, wireMaterial);
+                        wire.position.x = (i - 2) * 0.15;
+                        wire.rotation.z = Math.PI / 2;
+                        mesh.add(wire);
+                        
+                        // Connectors
+                        const connectorGeometry = new THREE.BoxGeometry(0.1, 0.08, 0.15);
+                        const connectorMaterial = new THREE.MeshPhongMaterial({ color: 0x1a1a1a });
+                        const connector1 = new THREE.Mesh(connectorGeometry, connectorMaterial);
+                        connector1.position.set((i - 2) * 0.15, 0, 1.05);
+                        mesh.add(connector1);
+                        const connector2 = connector1.clone();
+                        connector2.position.z = -1.05;
+                        mesh.add(connector2);
+                    });
+                    break;
+
+                default:
+                    // Default cube
+                    const geometry = new THREE.BoxGeometry(1, 1, 1);
+                    const material = new THREE.MeshPhongMaterial({ color: 0x3b82f6 });
+                    mesh = new THREE.Mesh(geometry, material);
+            }
+
+            scene.add(mesh);
+            camera.position.z = 3;
+
+            // Mouse interaction
+            let isDragging = false;
+            let previousMousePosition = { x: 0, y: 0 };
+            let rotation = { x: 0, y: 0 };
+
+            container.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                previousMousePosition = { x: e.clientX, y: e.clientY };
+            });
+
+            container.addEventListener('mousemove', (e) => {
+                if (isDragging) {
+                    const deltaMove = {
+                        x: e.clientX - previousMousePosition.x,
+                        y: e.clientY - previousMousePosition.y
+                    };
+
+                    rotation.y += deltaMove.x * 0.01;
+                    rotation.x += deltaMove.y * 0.01;
+
+                    previousMousePosition = { x: e.clientX, y: e.clientY };
+                }
+            });
+
+            container.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+
+            container.addEventListener('mouseleave', () => {
+                isDragging = false;
+            });
+
+            // Animation
+            function animate() {
+                requestAnimationFrame(animate);
+
+                if (!isDragging) {
+                    rotation.y += 0.005;
+                }
+
+                mesh.rotation.x = rotation.x;
+                mesh.rotation.y = rotation.y;
+
+                renderer.render(scene, camera);
+            }
+
+            animate();
+
+            // Handle window resize
+            window.addEventListener('resize', () => {
+                if (container.clientWidth > 0) {
+                    camera.aspect = container.clientWidth / container.clientHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(container.clientWidth, container.clientHeight);
+                }
+            });
+        }
+
+        // Initialize all 3D models when page loads
+        window.addEventListener('load', () => {
+            create3DModel('model1', 'raspberry');
+            create3DModel('model2', 'camera');
+            create3DModel('model3', 'sdcard');
+            create3DModel('model4', 'powerbank');
+            create3DModel('model5', 'buzzer');
+            create3DModel('model6', 'led');
+            create3DModel('model7', 'transistor');
+            create3DModel('model8', 'resistor');
+            create3DModel('model9', 'wires');
+        });
+
+        // Parallax effect for hero section
+        window.addEventListener('scroll', () => {
+            const scrolled = window.pageYOffset;
+            const hero = document.querySelector('.hero');
+            if (hero && scrolled < window.innerHeight) {
+                hero.style.transform = `translateY(${scrolled * 0.5}px)`;
+            }
+        });
+    </script>
+</body>
+</html>
