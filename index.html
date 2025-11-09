@@ -271,12 +271,14 @@
         }
 
         .camera-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
+            width: 120%;
+            height: 120%;
+            object-fit: contain;
             border-radius: 15px;
             position: relative;
             z-index: 1;
+            padding: 0.5rem;
+            transform: scale(1.1);
         }
 
         @keyframes fadeInUp {
@@ -515,6 +517,13 @@
         .gallery-item:hover {
             transform: scale(1.02);
             box-shadow: 0 20px 60px rgba(59, 130, 246, 0.3);
+        }
+
+        .gallery-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 20px;
         }
 
         .gallery-placeholder {
@@ -1098,7 +1107,7 @@
             </div>
             <div class="hero-image">
                 <div class="device-mockup">
-                    <img src="https://images.unsplash.com/photo-1606166325683-7321ab4c5014?w=800&h=600&fit=crop" alt="Raspberry Pi Camera" class="camera-image">
+                    <img src="/camera.png" alt="Raspberry Pi Camera" class="camera-image">
                 </div>
             </div>
         </div>
@@ -1242,28 +1251,10 @@
         <h2 class="section-title">Галерея проекта</h2>
         <div class="gallery-grid">
             <div class="gallery-item">
-                <div class="gallery-placeholder">
-                    <i class="fas fa-project-diagram"></i>
-                    <p>Схема Fritzing</p>
-                </div>
+                <img src="ccamera.png" alt="Камера системы DriveSafe" class="gallery-image">
             </div>
             <div class="gallery-item">
-                <div class="gallery-placeholder">
-                    <i class="fas fa-cube"></i>
-                    <p>3D Модель Tinkercad</p>
-                </div>
-            </div>
-            <div class="gallery-item">
-                <div class="gallery-placeholder">
-                    <i class="fas fa-car"></i>
-                    <p>Устройство в автомобиле</p>
-                </div>
-            </div>
-            <div class="gallery-item">
-                <div class="gallery-placeholder">
-                    <i class="fas fa-code"></i>
-                    <p>Интерфейс программы</p>
-                </div>
+                <img src="camera.png" alt="Raspberry Pi Camera" class="gallery-image">
             </div>
         </div>
     </section>
@@ -1301,20 +1292,11 @@
             </div>
             <div class="faq-item">
                 <div class="faq-question">
-                    Можно ли настроить чувствительность системы?
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-                <div class="faq-answer">
-                    <p>Абсолютно! В программном обеспечении можно настроить время срабатывания (по умолчанию 3 секунды), громкость сигнала и интенсивность световой индикации под ваши предпочтения.</p>
-                </div>
-            </div>
-            <div class="faq-item">
-                <div class="faq-question">
                     Что делать, если я ношу очки или солнцезащитные очки?
                     <i class="fas fa-chevron-down"></i>
                 </div>
                 <div class="faq-answer">
-                    <p>Алгоритм распознавания лиц обучен работать с очками. Обычные очки не создают проблем. Для темных солнцезащитных очков рекомендуется калибровка системы или использование в дневное время без них.</p>
+                    <p>Алгоритм распознавания лиц обучен работать с очками. Обычные очки не создают проблем. Для темных нужно быть в дневное время без них.</p>
                 </div>
             </div>
             <div class="faq-item">
@@ -1333,7 +1315,7 @@
     <footer id="contact">
         <div class="footer-content">
             <div class="footer-brand">
-                <h2>DriveSafe AI</h2>
+                <h2>DriveSafe</h2>
                 <p>Инновационная система безопасности, разработанная для сохранения жизней на дорогах. Наша миссия — сделать каждую поездку безопасной, используя передовые технологии искусственного интеллекта и компьютерного зрения.</p>
                 <div class="social-links">
                     <a href="#"><i class="fab fa-facebook-f"></i></a>
@@ -1358,20 +1340,20 @@
                 <h3>Контакты</h3>
                 <div class="contact-info">
                     <i class="fas fa-envelope"></i>
-                    <span>info@drivesafe-ai.com</span>
+                    <span>gluhihdmitrij083@gmail.com</span>
                 </div>
                 <div class="contact-info">
                     <i class="fas fa-phone"></i>
-                    <span>+7 (999) 123-45-67</span>
+                    <span>+7 (777) 166 0603</span>
                 </div>
                 <div class="contact-info">
                     <i class="fas fa-map-marker-alt"></i>
-                    <span>Москва, Россия</span>
+                    <span>Петропавловск, Казахстан</span>
                 </div>
             </div>
         </div>
         <div class="footer-bottom">
-            <p>&copy; 2025 DriveSafe AI. Все права защищены. Создано с ❤️ для безопасности водителей.</p>
+            <p>&copy; 2025 DriveSafe. Все права защищены. Создано любовью для безопасности водителей.</p>
         </div>
     </footer>
 
